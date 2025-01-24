@@ -7,7 +7,6 @@ import 'package:cabzing/Models/profile_model.dart';
 
 class ApiService {
   static const String loginUrl = 'https://api.accounts.vikncodes.com/api/v1/users/login';
-
   static const String profileUrl = 'https://www.api.viknbooks.com/api/v10/users/user-view/62/';
   static const String saleListUrl = 'https://www.api.viknbooks.com/api/v10/sales/sale-list-page/';
 
@@ -43,6 +42,7 @@ class ApiService {
     }
   }
 
+
   Future<GetProfileModel?> getProfile() async {
     try {
       final dio = Dio();
@@ -75,6 +75,7 @@ class ApiService {
     }
   }
 
+
   Future<GetSaleListResponseModel?> getSaleList({required PostSaleListRequestModel postSaleListRequestModel})async{
     try {
       final dio = Dio();
@@ -99,5 +100,6 @@ class ApiService {
       return null;
     }
   }
+
 
 }

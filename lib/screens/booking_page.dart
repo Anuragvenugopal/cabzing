@@ -1,4 +1,6 @@
+import 'package:cabzing/screens/home_page.dart';
 import 'package:cabzing/utils/app_colors.dart';
+import 'package:cabzing/widgets/build_bottom_navbar_widget.dart';
 import 'package:cabzing/widgets/build_text_widget.dart';
 import 'package:cabzing/widgets/icon_button_widget.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,6 +16,12 @@ class BookingPage extends StatefulWidget {
 class _BookingPageState extends State<BookingPage> {
   @override
   Widget build(BuildContext context) {
+    int _selectedIndex = 1;
+    void _onTabTapped(int index) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
     return Scaffold(backgroundColor: AppColors.black,
       appBar: AppBar(
         backgroundColor: AppColors.black,
@@ -24,7 +32,7 @@ class _BookingPageState extends State<BookingPage> {
             color: AppColors.white,
           ),
           onTap: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(),));
           },
         ),
         title: BuildTextWidget(
@@ -42,6 +50,10 @@ class _BookingPageState extends State<BookingPage> {
             color: AppColors.blue,
           )),
         ],
+      ),
+      bottomNavigationBar:  CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onTabTapped,
       ),
     );
   }

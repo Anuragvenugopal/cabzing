@@ -1,4 +1,3 @@
-import 'package:cabzing/Models/get_sale_list_response_model.dart';
 import 'package:cabzing/Models/post_sale_list_request_model.dart';
 import 'package:cabzing/api_services/api_service.dart';
 import 'package:cabzing/screens/add_filters_page.dart';
@@ -14,74 +13,93 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
-  final List<Map<String, dynamic>> invoices = [
-    {
-      'status': 'Pending',
-      'customerName': 'Customer Name 1',
-      'amount': 'SAR. 10,000.00',
-      'statusColor': Colors.red,
-    },
-    {
-      'status': 'Invoiced',
-      'customerName': 'Customer Name 2',
-      'amount': 'SAR. 10,000.00',
-      'statusColor': Colors.blue,
-    },
-    {
-      'status': 'Cancelled',
-      'customerName': 'Customer Name 3',
-      'amount': 'SAR. 10,000.00',
-      'statusColor': Colors.grey,
-    },
-    {
-      'status': 'Pending',
-      'customerName': 'Customer Name 4',
-      'amount': 'SAR. 10,000.00',
-      'statusColor': Colors.red,
-    },
-  ];
-
   TextEditingController searchController = TextEditingController();
+
+
   List<Map<String, dynamic>> filteredInvoices = [];
-  GetSaleListResponseModel?getSaleListResponseModel;
-
-  getSaleListData()async{
-   final respons= await ApiService().getSaleList(postSaleListRequestModel: PostSaleListRequestModel(
-      branchId: 1,
-      companyId: "1901b825-fe6f-418d-b5f0-7223d0040d08",
-      createdUserId: "62",
-      priceRounding: 2,
-      pageNo: 1,
-      itemsPerPage: 10,
-      type: "Sales",
-      warehouseId: 1
-    ));
-   setState(() {
-     getSaleListResponseModel=respons;
-
-   });
-  }
-
+  List<Map<String, dynamic>> allInvoices = [];
+  bool isLoading = true;
+  bool isLoadingMore = false;
+  bool hasMore = true;
+  int currentPage = 1;
+  final int itemsPerPage = 10;
   @override
   void initState() {
     super.initState();
     getSaleListData();
-    filteredInvoices = invoices;
+    searchController.addListener(filterInvoices);
+
   }
 
-  void filterInvoices() {
+
+  Future<void> getSaleListData({bool isLoadMore = false}) async {
+    if (isLoadingMore) return;
+
     setState(() {
-      filteredInvoices = invoices
-          .where((invoice) =>
-      invoice['customerName']
-          .toLowerCase()
-          .contains(searchController.text.toLowerCase()) ||
-          invoice['status']
-              .toLowerCase()
-              .contains(searchController.text.toLowerCase()))
+      if (isLoadMore) {
+        isLoadingMore = true;
+      } else {
+        isLoading = true;
+      }
+    });
+
+    try {
+      final response = await ApiService().getSaleList(
+        postSaleListRequestModel: PostSaleListRequestModel(
+          branchId: 1,
+          companyId: "1901b825-fe6f-418d-b5f0-7223d0040d08",
+          createdUserId: "62",
+          priceRounding: 2,
+          pageNo: 20,
+          itemsPerPage: itemsPerPage,
+          type: "Sales",
+          warehouseId: 1,
+        ),
+      );
+
+      setState(() {
+        if (response?.data != null && response!.data!.isNotEmpty) {
+          allInvoices.addAll(response.data!.map((invoice) => {
+            'voucherNo': invoice.voucherNo,
+            'status': invoice.status,
+            'customerName': invoice.customerName,
+            'grandTotalRounded': invoice.grandTotalRounded,
+          }));
+          filteredInvoices = allInvoices;
+          currentPage++;
+        } else {
+          hasMore = false;
+        }
+      });
+    } catch (e) {
+      print('Error fetching sale list: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    }
+  }
+
+
+
+
+  void filterInvoices() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      filteredInvoices = allInvoices
+          .where((invoice) {
+        final customerName = invoice['customerName']?.toLowerCase() ?? '';
+        final status = invoice['status']?.toLowerCase() ?? '';
+        final voucherNo = invoice['voucherNo']?.toLowerCase() ?? '';
+        return customerName.contains(query) ||
+            status.contains(query) ||
+            voucherNo.contains(query);
+      })
           .toList();
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -133,9 +151,6 @@ class _InvoicePageState extends State<InvoicePage> {
                         Expanded(
                           child: TextField(
                             controller: searchController,
-                            onChanged: (value) {
-                              filterInvoices();
-                            },
                             style: TextStyle(
                               color: AppColors.white,
                               fontSize: 14,
@@ -170,8 +185,7 @@ class _InvoicePageState extends State<InvoicePage> {
                       children: [
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: SvgPicture.asset(
-                              'assets/images/Icons/filter_icon.svg'),
+                          child: SvgPicture.asset('assets/images/Icons/filter_icon.svg'),
                         ),
                         BuildTextWidget(
                           text: 'Add Filters',
@@ -188,58 +202,98 @@ class _InvoicePageState extends State<InvoicePage> {
             SizedBox(height: 16),
             Divider(color: AppColors.light_grey),
             Expanded(
-              child: ListView.builder(
-                itemCount: getSaleListResponseModel?.data?.length,
-                itemBuilder: (context, index) {
-                  // final invoice = filteredInvoices[index];
-                  return Column(
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Row(
-                          children: [
-                            BuildTextWidget(
-                              text:getSaleListResponseModel?.data?[index].voucherNo??'no data',
-                              color: AppColors.white,
-                              fontSize: 16,
-                            ),
-                            Spacer(),
-                            BuildTextWidget(
-                              text: getSaleListResponseModel?.data?[index].status??"",
-                              color: getSaleListResponseModel?.data?[index].status=="Invoiced"?AppColors.blue:getSaleListResponseModel?.data?[index].status=="Cancelled"?AppColors.grey:AppColors.red,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            )
-                          ],
-                        ),
-                        subtitle: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(height: 4),
-                                BuildTextWidget(
-                                  text: getSaleListResponseModel?.data?[index].customerName??'no data',
-                                  color: AppColors.grey,
-                                  fontSize: 14,
-                                ),
-                                SizedBox(height: 4),
-                              ],
-                            ),
-                            BuildTextWidget(
-                              text: getSaleListResponseModel?.data?[index].grandTotalRounded?.toString()??"",
-                              color: AppColors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Divider(color: AppColors.light_grey),
-                    ],
-                  );
+              child: isLoading
+                  ? Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.blue,
+                ),
+              )
+                  : filteredInvoices.isEmpty
+                  ? Center(
+                child: BuildTextWidget(
+                  text: 'No invoices found.',
+                  color: AppColors.grey,
+                  fontSize: 16,
+                ),
+              )
+                  : NotificationListener<ScrollNotification>(
+                onNotification: (scrollInfo) {
+                  if (scrollInfo.metrics.pixels ==
+                      scrollInfo.metrics.maxScrollExtent &&
+                      hasMore &&
+                      !isLoadingMore) {
+                    getSaleListData(isLoadMore: true);
+                  }
+                  return false;
                 },
+                child: ListView.builder(
+                  itemCount: filteredInvoices.length + (hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == filteredInvoices.length) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.blue,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final invoice = filteredInvoices[index];
+                    return Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Row(
+                            children: [
+                              BuildTextWidget(
+                                text: invoice['voucherNo'] ?? 'No Data',
+                                color: AppColors.white,
+                                fontSize: 16,
+                              ),
+                              Spacer(),
+                              BuildTextWidget(
+                                text: invoice['status'] ?? "",
+                                color: invoice['status'] == "Invoiced"
+                                    ? AppColors.blue
+                                    : invoice['status'] == "Cancelled"
+                                    ? AppColors.grey
+                                    : AppColors.red,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ],
+                          ),
+                          subtitle: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: 4),
+                                  BuildTextWidget(
+                                    text: invoice['customerName'] ?? 'No Data',
+                                    color: AppColors.grey,
+                                    fontSize: 14,
+                                  ),
+                                  SizedBox(height: 4),
+                                ],
+                              ),
+                              BuildTextWidget(
+                                text: invoice['grandTotalRounded']?.toString() ?? "",
+                                color: AppColors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(color: AppColors.light_grey),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ],

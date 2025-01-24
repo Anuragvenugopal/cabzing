@@ -13,6 +13,8 @@ class AppHive {
   //
   // }
   static const String _USER_ID = "user_id";
+
+  static const String _ISLOGGEDIN = "isLoggedIn";
   static const String _VIDEOSOUNDSTATUS = "video_sound_status";
   static const String _IS_SIGNED_IN_USER = "isSignedInUser";
   static const String _NAME = "name";
@@ -51,7 +53,15 @@ class AppHive {
   String getUserId() {
     return hiveGet(key: _USER_ID);
   }
-
+  bool? getIsUserLoggedIn() {
+    return Hive.box(Constants.BOX_NAME).get(_ISLOGGEDIN);
+  }
+  Future<void> putIsUserLoggedIn({required bool isLoggedIn}) async {
+    await Hive.box(Constants.BOX_NAME).put(
+      _ISLOGGEDIN,
+      isLoggedIn,
+    );
+  }
 
   putVideoAudioStatus({bool? isVideoPlaying}) {
     hivePutBool(

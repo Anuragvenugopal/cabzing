@@ -2,11 +2,14 @@ import 'package:cabzing/Models/profile_model.dart';
 import 'package:cabzing/api_services/api_service.dart';
 import 'package:cabzing/screens/login_page.dart';
 import 'package:cabzing/utils/app_colors.dart';
+import 'package:cabzing/utils/hive.dart';
+import 'package:cabzing/widgets/build_bottom_navbar_widget.dart';
 import 'package:cabzing/widgets/build_elivated_button_widget.dart';
 import 'package:cabzing/widgets/build_text_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,13 +21,13 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   GetProfileModel? profileModel;
 
-  getProfileData()async{
-    final response = await    ApiService().getProfile();
-    if(response!=null) {
+  getProfileData() async {
+    final response = await ApiService().getProfile();
+    if (response != null) {
       setState(() {
         profileModel = response;
       });
-    }else{
+    } else {
       print("no data");
     }
   }
@@ -35,10 +38,58 @@ class _ProfilePageState extends State<ProfilePage> {
     getProfileData();
   }
 
-
-  Future<void> fetchUserProfile({required String token}) async {
-
+  void showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.lite_black,
+        title: BuildTextWidget(
+          text: 'Are you sure you want to logout?',
+          color: AppColors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: BuildTextWidget(
+              text: 'Cancel',
+              color: AppColors.purple,
+              fontSize: 16,
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              AppHive().putIsUserLoggedIn(isLoggedIn: false);
+              appHive.clearHive();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginPage(),
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Logout Successful!',
+                      style: TextStyle(color: AppColors.white),
+                    ),
+                    backgroundColor: AppColors.red,
+                  ));
+            },
+            child: BuildTextWidget(
+              text: 'Logout',
+              color: AppColors.red,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
   }
+
 
 
   @override
@@ -59,7 +110,12 @@ class _ProfilePageState extends State<ProfilePage> {
         'text': 'Privacy Policy'
       },
     ];
-
+    int _selectedIndex = 3;
+    void _onTabTapped(int index) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
     return Scaffold(
       backgroundColor: AppColors.black,
       body: SingleChildScrollView(
@@ -91,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             borderRadius: BorderRadius.circular(33),
                             color: AppColors.black,
                             image: DecorationImage(
-                              image: NetworkImage(profileModel?.customerData?.photo??""),fit: BoxFit.cover
+                                image: NetworkImage(profileModel?.customerData?.photo??""), fit: BoxFit.cover
                             ),
                           ),
                         ),
@@ -233,11 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     BuildElevatedButtonWidget(
                       buttonText: "Logout",
                       onPressed: () {
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LoginPage(),
-                            ));
+                        showLogoutConfirmationDialog();
                       },
                       width: screenWidth,
                       height: 62,
@@ -245,7 +297,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       backgroundColor: AppColors.black,
                       textColor: AppColors.red,
                       svgPrefixIcon: 'assets/images/Icons/logot_icon.svg',
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -276,9 +328,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   physics: BouncingScrollPhysics(),
                 ),
               ),
+
             ],
           ),
         ),
+      ),
+      bottomNavigationBar:  CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onTabTapped,
       ),
     );
   }

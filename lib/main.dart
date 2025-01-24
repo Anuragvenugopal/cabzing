@@ -1,5 +1,7 @@
+import 'package:cabzing/screens/home_page.dart';
 import 'package:cabzing/screens/login_page.dart';
 import 'package:cabzing/utils/contanst.dart';
+import 'package:cabzing/utils/hive.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
@@ -26,6 +28,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -33,7 +36,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      home: AppHive().getIsUserLoggedIn()==true ? HomePage() : LoginPage(),
     );
   }
 }

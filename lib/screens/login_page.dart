@@ -1,6 +1,7 @@
 import 'package:cabzing/api_services/api_service.dart';
 import 'package:cabzing/screens/home_page.dart';
 import 'package:cabzing/utils/app_colors.dart';
+import 'package:cabzing/utils/hive.dart';
 import 'package:cabzing/widgets/build_elivated_button_widget.dart';
 import 'package:cabzing/widgets/build_text_feild_widget.dart';
 import 'package:cabzing/widgets/build_text_widget.dart';
@@ -8,17 +9,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final bool showLogoutMessage;
+  const LoginPage({super.key, required,
+   this.showLogoutMessage=false
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-    final TextEditingController usernameController = TextEditingController(text: "Rabeeh@vk");
+  final TextEditingController usernameController = TextEditingController(text: "Rabeeh@vk");
   final TextEditingController passwordController = TextEditingController(text: "Rabeeh@000");
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -37,9 +42,19 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Login Successful!',
+              style: TextStyle(color: AppColors.white),
+            ),
+            backgroundColor: AppColors.green,
+          ),
+        );
+        appHive.putIsUserLoggedIn(isLoggedIn: true);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) =>  HomePage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -48,6 +63,8 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                           height: 32,
                           width: 32,
                         ),
-                         BuildTextWidget(
+                        BuildTextWidget(
                           text: "English",
                           color: AppColors.white,
                         ),
@@ -88,12 +105,12 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   SizedBox(height: screenHeight / 4.2),
-                   BuildTextWidget(
+                  BuildTextWidget(
                     text: 'Login',
                     fontWeight: FontWeight.w500,
                     fontSize: 21,
                   ),
-                   BuildTextWidget(
+                  BuildTextWidget(
                     text: 'Login to your vikn account',
                     fontWeight: FontWeight.w200,
                     fontSize: 18,
@@ -106,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                       formKey:_formKey ,
                     ),
                   ),
-                   BuildTextWidget(
+                  BuildTextWidget(
                     text: 'Forgotten Password?',
                     color: AppColors.blue,
                   ),
@@ -120,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                     suffixIcon: Icons.arrow_forward,
                   ),
                   const SizedBox(height: 80),
-                   BuildTextWidget(
+                  BuildTextWidget(
                     text: 'Don’t have an Account?',
                     color: AppColors.white,
                   ),

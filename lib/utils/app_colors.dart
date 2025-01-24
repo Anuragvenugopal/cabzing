@@ -18,4 +18,5 @@ class AppColors{
   static Color red= Color(0xFFEA6262);
   static Color grey_off= Color(0xFF1B2B30);
   static Color black= CupertinoColors.black;
+  static Color off_white =Color(0xFF323232);
 }
