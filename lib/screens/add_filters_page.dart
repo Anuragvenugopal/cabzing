@@ -63,7 +63,9 @@ class _AddFiltersPageState extends State<AddFiltersPage> {
             Icons.arrow_back,
             color: AppColors.white,
           ),
-          onTap: () {},
+          onTap: () {
+            Navigator.pop(context);
+          },
         ),
         title:
         BuildTextWidget(text:'Filters',color: AppColors.white,),

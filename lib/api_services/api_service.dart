@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:developer';
 
 import 'package:cabzing/Models/get_sale_list_response_model.dart';
 import 'package:cabzing/Models/post_sale_list_request_model.dart';
@@ -6,20 +8,19 @@ import 'package:dio/dio.dart';
 import 'package:cabzing/Models/profile_model.dart';
 
 class ApiService {
-  static const String loginUrl = 'https://api.accounts.vikncodes.com/api/v1/users/login';
-  static const String profileUrl = 'https://www.api.viknbooks.com/api/v10/users/user-view/62/';
-  static const String saleListUrl = 'https://www.api.viknbooks.com/api/v10/sales/sale-list-page/';
+  static const String loginUrl =
+      'https://api.accounts.vikncodes.com/api/v1/users/login';
+  static const String profileUrl =
+      'https://www.api.viknbooks.com/api/v10/users/user-view/62/';
+  static const String saleListUrl =
+      'https://www.api.viknbooks.com/api/v10/sales/sale-list-page/';
 
   Future<bool> login(String username, String password) async {
     try {
       final dio = Dio();
       final response = await dio.post(
         loginUrl,
-        data: {
-          "username": username,
-          "password": password,
-          "is_mobile": true
-        },
+        data: {"username": username, "password": password, "is_mobile": true},
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
@@ -41,7 +42,6 @@ class ApiService {
       return false;
     }
   }
-
 
   Future<GetProfileModel?> getProfile() async {
     try {
@@ -75,22 +75,31 @@ class ApiService {
     }
   }
 
-
-  Future<GetSaleListResponseModel?> getSaleList({required PostSaleListRequestModel postSaleListRequestModel})async{
+  Future<GetSaleListResponseModel?> getSaleList(
+      {required PostSaleListRequestModel postSaleListRequestModel}) async {
     try {
       final dio = Dio();
       final response = await dio.post(
         saleListUrl,
         data: postSaleListRequestModel.toJson(),
-        options: Options(headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ${AppHive().getToken()}',}),
+        options: Options(headers: {
+          'Authorization': 'Bearer ${AppHive().getToken()}',
+          'Content-Type': 'application/json',
+        }),
       );
-
       if (response.statusCode == 200) {
         final data = response.data;
         print('db' * 100);
         print(data);
-        final saleListResponse =GetSaleListResponseModel.fromJson(data);
-        return saleListResponse;
+        try {
+          final saleListResponse =
+          GetSaleListResponseModel.fromJson(response.data);
+          return saleListResponse;
+        } catch (e) {
+          print(e);
+          print("e.toString()");
+          return null;
+        }
       } else {
         print('Login failed: ${response.data}');
         return null;
@@ -100,6 +109,4 @@ class ApiService {
       return null;
     }
   }
-
-
 }

@@ -4,9 +4,11 @@
 
 import 'dart:convert';
 
-GetSaleListResponseModel getSaleListResponseModelFromJson(String str) => GetSaleListResponseModel.fromJson(json.decode(str));
+GetSaleListResponseModel getSaleListResponseModelFromJson(String str) =>
+    GetSaleListResponseModel.fromJson(json.decode(str));
 
-String getSaleListResponseModelToJson(GetSaleListResponseModel data) => json.encode(data.toJson());
+// String getSaleListResponseModelToJson(GetSaleListResponseModel data) =>
+//     json.encode(data.toJson());
 
 class GetSaleListResponseModel {
   final int? statusCode;
@@ -19,17 +21,22 @@ class GetSaleListResponseModel {
     this.totalCount,
   });
 
-  factory GetSaleListResponseModel.fromJson(Map<String, dynamic> json) => GetSaleListResponseModel(
-    statusCode: json["StatusCode"],
-    data: json["data"] == null ? [] : List<Datum>.from(json["data"]!.map((x) => Datum.fromJson(x))),
-    totalCount: json["total_count"],
-  );
+  factory GetSaleListResponseModel.fromJson(Map<String, dynamic> json) =>
+      GetSaleListResponseModel(
+        statusCode: json["StatusCode"],
+        data: json["data"] == null
+            ? []
+            : List<Datum>.from(json["data"].map((x) => Datum.fromJson(x))),
+        totalCount: json["total_count"],
+      );
 
-  Map<String, dynamic> toJson() => {
-    "StatusCode": statusCode,
-    "data": data == null ? [] : List<dynamic>.from(data!.map((x) => x.toJson())),
-    "total_count": totalCount,
-  };
+// Map<String, dynamic> toJson() => {
+//       "StatusCode": statusCode,
+//       "data": data == null
+//           ? []
+//           : List<dynamic>.from(data!.map((x) => x.toJson())),
+//       "total_count": totalCount,
+//     };
 }
 
 class Datum {
@@ -73,42 +80,38 @@ class Datum {
     ledgerName: json["LedgerName"],
     totalGrossAmtRounded: json["TotalGrossAmt_rounded"]?.toDouble(),
     totalTaxRounded: json["TotalTax_rounded"]?.toDouble(),
-    grandTotalRounded: json["GrandTotal_Rounded"],
+    grandTotalRounded: json["GrandTotal_Rounded"]?.toDouble(),
     customerName: json["CustomerName"],
     totalTax: json["TotalTax"]?.toDouble(),
     status: json["Status"],
-    grandTotal: json["GrandTotal"],
+    grandTotal: json["GrandTotal"]?.toDouble(),
     isBillwised: json["is_billwised"],
-    billwiseStatus: billwiseStatusValues.map[json["billwise_status"]]!,
+    billwiseStatus: billwiseStatusValues.map[json["billwise_status"]],
   );
 
-  Map<String, dynamic> toJson() => {
-    "index": index,
-    "id": id,
-    "VoucherNo": voucherNo,
-    "Date": "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}",
-    "LedgerName": ledgerName,
-    "TotalGrossAmt_rounded": totalGrossAmtRounded,
-    "TotalTax_rounded": totalTaxRounded,
-    "GrandTotal_Rounded": grandTotalRounded,
-    "CustomerName": customerName,
-    "TotalTax": totalTax,
-    "Status": status,
-    "GrandTotal": grandTotal,
-    "is_billwised": isBillwised,
-    "billwise_status": billwiseStatusValues.reverse[billwiseStatus],
-  };
+//   Map<String, dynamic> toJson() => {
+//         "index": index,
+//         "id": id,
+//         "VoucherNo": voucherNo,
+//         "Date":
+//             "${date!.year.toString().padLeft(4, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.day.toString().padLeft(2, '0')}",
+//         "LedgerName": ledgerName,
+//         "TotalGrossAmt_rounded": totalGrossAmtRounded,
+//         "TotalTax_rounded": totalTaxRounded,
+//         "GrandTotal_Rounded": grandTotalRounded,
+//         "CustomerName": customerName,
+//         "TotalTax": totalTax,
+//         "Status": status,
+//         "GrandTotal": grandTotal,
+//         "is_billwised": isBillwised,
+//         "billwise_status": billwiseStatusValues.reverse[billwiseStatus],
+//       };
 }
 
-enum BillwiseStatus {
-  PAID,
-  UNPAID
-}
+enum BillwiseStatus { PAID, UNPAID }
 
-final billwiseStatusValues = EnumValues({
-  "paid": BillwiseStatus.PAID,
-  "unpaid": BillwiseStatus.UNPAID
-});
+final billwiseStatusValues =
+EnumValues({"paid": BillwiseStatus.PAID, "unpaid": BillwiseStatus.UNPAID});
 
 // enum ErName {
 //   CASH_IN_HAND,

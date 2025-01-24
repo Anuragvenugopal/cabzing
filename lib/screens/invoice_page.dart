@@ -15,42 +15,37 @@ class InvoicePage extends StatefulWidget {
 class _InvoicePageState extends State<InvoicePage> {
   TextEditingController searchController = TextEditingController();
 
-
   List<Map<String, dynamic>> filteredInvoices = [];
   List<Map<String, dynamic>> allInvoices = [];
   bool isLoading = true;
-  bool isLoadingMore = false;
-  bool hasMore = true;
+  bool hasMore = false;
   int currentPage = 1;
   final int itemsPerPage = 10;
+  final scrollerController = ScrollController();
   @override
   void initState() {
     super.initState();
     getSaleListData();
     searchController.addListener(filterInvoices);
-
+    scrollerController.addListener(_onScroll);
   }
 
-
   Future<void> getSaleListData({bool isLoadMore = false}) async {
-    if (isLoadingMore) return;
+    if (hasMore) return;
 
     setState(() {
-      if (isLoadMore) {
-        isLoadingMore = true;
-      } else {
-        isLoading = true;
-      }
+      hasMore = true;
     });
 
     try {
+      print("in try $currentPage $itemsPerPage");
       final response = await ApiService().getSaleList(
         postSaleListRequestModel: PostSaleListRequestModel(
           branchId: 1,
           companyId: "1901b825-fe6f-418d-b5f0-7223d0040d08",
           createdUserId: "62",
           priceRounding: 2,
-          pageNo: 20,
+          pageNo: currentPage,
           itemsPerPage: itemsPerPage,
           type: "Sales",
           warehouseId: 1,
@@ -59,6 +54,7 @@ class _InvoicePageState extends State<InvoicePage> {
 
       setState(() {
         if (response?.data != null && response!.data!.isNotEmpty) {
+          print("get response");
           allInvoices.addAll(response.data!.map((invoice) => {
             'voucherNo': invoice.voucherNo,
             'status': invoice.status,
@@ -67,6 +63,8 @@ class _InvoicePageState extends State<InvoicePage> {
           }));
           filteredInvoices = allInvoices;
           currentPage++;
+          hasMore = false;
+          isLoading = false;
         } else {
           hasMore = false;
         }
@@ -76,30 +74,32 @@ class _InvoicePageState extends State<InvoicePage> {
     } finally {
       setState(() {
         isLoading = false;
-        isLoadingMore = false;
       });
     }
   }
 
-
-
-
   void filterInvoices() {
     final query = searchController.text.toLowerCase();
     setState(() {
-      filteredInvoices = allInvoices
-          .where((invoice) {
+      filteredInvoices = allInvoices.where((invoice) {
         final customerName = invoice['customerName']?.toLowerCase() ?? '';
         final status = invoice['status']?.toLowerCase() ?? '';
         final voucherNo = invoice['voucherNo']?.toLowerCase() ?? '';
         return customerName.contains(query) ||
             status.contains(query) ||
             voucherNo.contains(query);
-      })
-          .toList();
+      }).toList();
     });
   }
 
+  void _onScroll() {
+    print("load more");
+    if (scrollerController.position.pixels >=
+        scrollerController.position.maxScrollExtent - 100 &&
+        !hasMore) {
+      getSaleListData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,14 +178,16 @@ class _InvoicePageState extends State<InvoicePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => AddFiltersPage()),
+                        MaterialPageRoute(
+                            builder: (context) => AddFiltersPage()),
                       );
                     },
                     child: Row(
                       children: [
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: SvgPicture.asset('assets/images/Icons/filter_icon.svg'),
+                          child: SvgPicture.asset(
+                              'assets/images/Icons/filter_icon.svg'),
                         ),
                         BuildTextWidget(
                           text: 'Add Filters',
@@ -216,84 +218,80 @@ class _InvoicePageState extends State<InvoicePage> {
                   fontSize: 16,
                 ),
               )
-                  : NotificationListener<ScrollNotification>(
-                onNotification: (scrollInfo) {
-                  if (scrollInfo.metrics.pixels ==
-                      scrollInfo.metrics.maxScrollExtent &&
-                      hasMore &&
-                      !isLoadingMore) {
-                    getSaleListData(isLoadMore: true);
-                  }
-                  return false;
-                },
-                child: ListView.builder(
-                  itemCount: filteredInvoices.length + (hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == filteredInvoices.length) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.blue,
-                          ),
+                  : ListView.builder(
+                itemCount:
+                filteredInvoices.length + (hasMore ? 1 : 0),
+                controller: scrollerController,
+                itemBuilder: (context, index) {
+                  if (index == filteredInvoices.length) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.blue,
                         ),
-                      );
-                    }
-
-                    final invoice = filteredInvoices[index];
-                    return Column(
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Row(
-                            children: [
-                              BuildTextWidget(
-                                text: invoice['voucherNo'] ?? 'No Data',
-                                color: AppColors.white,
-                                fontSize: 16,
-                              ),
-                              Spacer(),
-                              BuildTextWidget(
-                                text: invoice['status'] ?? "",
-                                color: invoice['status'] == "Invoiced"
-                                    ? AppColors.blue
-                                    : invoice['status'] == "Cancelled"
-                                    ? AppColors.grey
-                                    : AppColors.red,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ],
-                          ),
-                          subtitle: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: 4),
-                                  BuildTextWidget(
-                                    text: invoice['customerName'] ?? 'No Data',
-                                    color: AppColors.grey,
-                                    fontSize: 14,
-                                  ),
-                                  SizedBox(height: 4),
-                                ],
-                              ),
-                              BuildTextWidget(
-                                text: invoice['grandTotalRounded']?.toString() ?? "",
-                                color: AppColors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Divider(color: AppColors.light_grey),
-                      ],
+                      ),
                     );
-                  },
-                ),
+                  }
+
+                  final invoice = filteredInvoices[index];
+                  return Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Row(
+                          children: [
+                            BuildTextWidget(
+                              text: invoice['voucherNo'] ?? 'No Data',
+                              color: AppColors.white,
+                              fontSize: 16,
+                            ),
+                            Spacer(),
+                            BuildTextWidget(
+                              text: invoice['status'] ?? "",
+                              color: invoice['status'] == "Invoiced"
+                                  ? AppColors.blue
+                                  : invoice['status'] == "Cancelled"
+                                  ? AppColors.grey
+                                  : AppColors.red,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ],
+                        ),
+                        subtitle: Row(
+                          mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 4),
+                                BuildTextWidget(
+                                  text: invoice['customerName'] ??
+                                      'No Data',
+                                  color: AppColors.grey,
+                                  fontSize: 14,
+                                ),
+                                SizedBox(height: 4),
+                              ],
+                            ),
+                            BuildTextWidget(
+                              text: invoice['grandTotalRounded']
+                                  ?.toString() ??
+                                  "",
+                              color: AppColors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(color: AppColors.light_grey),
+                    ],
+                  );
+                },
               ),
             ),
           ],
